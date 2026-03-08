@@ -1,0 +1,16 @@
+use_default_settings: true
+
+general:
+  instance_name: "OpenClaw SearXNG"
+
+search:
+  # allow machine-readable output for the agent
+  formats:
+    - html
+    - json
+    - rss
+
+server:
+  # required for sessions / CSRF protection
+  secret_key: "0b1274be93723453965be7bf52e688266f0f37553eabcc4aea3e48dbec732662"
+  limiter: false

@@ -1,0 +1,12 @@
+services:
+  searxng:
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+      - SEARXNG_SECRET_KEY=0b1274be93723453965be7bf52e688266f0f37553eabcc4aea3e48dbec732662
+      - SEARXNG_INSTANCE_NAME=OpenClaw SearXNG
+    volumes:
+      - ./searxng:/etc/searxng:rw
