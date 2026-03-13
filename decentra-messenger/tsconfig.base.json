@@ -10,7 +10,8 @@
     "baseUrl": ".",
     "paths": {
       "@decentra/shared-types": ["packages/shared-types/src/index.ts"],
-      "@decentra/crypto-core": ["packages/crypto-core/src/index.ts"]
+      "@decentra/crypto-core": ["packages/crypto-core/src/index.ts"],
+      "@decentra/storage-core": ["packages/storage-core/src/index.ts"]
     }
   }
 }

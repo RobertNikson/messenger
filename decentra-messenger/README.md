@@ -15,6 +15,7 @@ E2E-first decentralized messenger foundation.
 - Signed message envelopes
 - Minimal libp2p chat node (topic pubsub)
 - Bootstrap peer server scaffold
+- Encrypted local session-state storage (SQLite + secretbox wrapper)
 
 ## Quick start
 ```bash
