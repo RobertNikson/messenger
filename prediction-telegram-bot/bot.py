@@ -10,8 +10,6 @@ from telegram.ext import (
     Application,
     CommandHandler,
     ContextTypes,
-    MessageHandler,
-    filters,
 )
 
 load_dotenv()
@@ -89,7 +87,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/unallow @username — убрать из списка\n"
         "/allowlist — показать список\n"
         "/disa_predskazaniy38 [вопрос] — персональное предсказание\n\n"
-        "Любой текст = вопрос для предсказания."
+        "Отвечаю только по команде /disa_predskazaniy38 [вопрос]."
     )
     await update.message.reply_text(text)
 
@@ -163,24 +161,6 @@ async def disa_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await _send_prediction(update, context, question)
 
 
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not update.message or not update.effective_user or not update.effective_chat:
-        return
-
-    question = (update.message.text or "").strip()
-    if len(question) < 3:
-        await update.message.reply_text("Сформулируй вопрос чуть подробнее 🙂")
-        return
-
-    trigger = "disa_predskazaniy38"
-    normalized = question.lower().strip()
-    if normalized == trigger or normalized.startswith(trigger + " "):
-        payload = question[len(trigger):].strip() if normalized.startswith(trigger) else ""
-        question = payload or "Что меня ждёт за покерным столом?"
-
-    await _send_prediction(update, context, question)
-
-
 def main() -> None:
     token = os.getenv("BOT_TOKEN")
     if not token:
@@ -193,7 +173,6 @@ def main() -> None:
     app.add_handler(CommandHandler("unallow", unallow_cmd))
     app.add_handler(CommandHandler("allowlist", allowlist_cmd))
     app.add_handler(CommandHandler("disa_predskazaniy38", disa_cmd))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
     print("Bot is running...")
     app.run_polling()
