@@ -1,0 +1,25 @@
+{
+  "name": "@decentra/p2p-core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/dev.ts"
+  },
+  "dependencies": {
+    "@chainsafe/libp2p-gossipsub": "^14.1.1",
+    "@decentra/crypto-core": "0.1.0",
+    "@decentra/shared-types": "0.1.0",
+    "@libp2p/identify": "^3.0.37",
+    "@libp2p/tcp": "^10.1.19",
+    "@libp2p/websockets": "^9.2.19",
+    "libp2p": "^2.8.9",
+    "uint8arrays": "^5.1.0",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
+  }
+}

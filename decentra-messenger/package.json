@@ -1,0 +1,13 @@
+{
+  "name": "decentra-messenger",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run -ws build",
+    "p2p:dev": "npm -w @decentra/p2p-core run dev"
+  }
+}
