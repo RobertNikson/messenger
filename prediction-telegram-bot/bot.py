@@ -56,12 +56,7 @@ def make_prediction(question: str, author_name: str, target_name: str | None = N
     who = target_name if target_name else author_name
     roast_line = f"{opener}, {who}: {answer}"
 
-    return (
-        "🔮 <b>Покер-предсказание</b>\n\n"
-        f"<b>Вопрос от:</b> {html.escape(author_name)}\n"
-        f"<b>Вопрос:</b> {html.escape(question)}\n\n"
-        f"<b>Предсказание:</b> {html.escape(roast_line)}"
-    )
+    return f"<b>Предсказание:</b> {html.escape(roast_line)}"
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
