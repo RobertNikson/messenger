@@ -91,8 +91,9 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/allow @username — добавить юзера в рандом-упоминания (с согласия)\n"
         "/unallow @username — убрать из списка\n"
         "/allowlist — показать список\n"
-        "/disa_predskazaniy38 [вопрос] — персональное предсказание\n\n"
-        "Отвечаю только по команде /disa_predskazaniy38 [вопрос]."
+        "/disa_predskazaniy38 [вопрос] — персональное предсказание\n"
+        "/disa [вопрос] — короткая команда\n\n"
+        "Отвечаю только по командам /disa_predskazaniy38 или /disa."
     )
     await update.message.reply_text(text)
 
@@ -178,6 +179,7 @@ def main() -> None:
     app.add_handler(CommandHandler("unallow", unallow_cmd))
     app.add_handler(CommandHandler("allowlist", allowlist_cmd))
     app.add_handler(CommandHandler("disa_predskazaniy38", disa_cmd))
+    app.add_handler(CommandHandler("disa", disa_cmd))
 
     print("Bot is running...")
     app.run_polling()
