@@ -87,7 +87,8 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/help — помощь\n"
         "/allow @username — добавить юзера в рандом-упоминания (с согласия)\n"
         "/unallow @username — убрать из списка\n"
-        "/allowlist — показать список\n\n"
+        "/allowlist — показать список\n"
+        "/disa_predskazaniy38 [вопрос] — персональное предсказание\n\n"
         "Любой текст = вопрос для предсказания."
     )
     await update.message.reply_text(text)
@@ -140,13 +141,8 @@ async def allowlist_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     await update.message.reply_text(f"Рандом-список:\n{lines}")
 
 
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def _send_prediction(update: Update, context: ContextTypes.DEFAULT_TYPE, question: str) -> None:
     if not update.message or not update.effective_user or not update.effective_chat:
-        return
-
-    question = (update.message.text or "").strip()
-    if len(question) < 3:
-        await update.message.reply_text("Сформулируй вопрос чуть подробнее 🙂")
         return
 
     author = _display_name(update.effective_user)
@@ -160,6 +156,31 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     await update.message.reply_text(prediction, parse_mode=ParseMode.HTML)
 
 
+async def disa_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.message:
+        return
+    question = " ".join(context.args).strip() if context.args else "Что меня ждёт за покерным столом?"
+    await _send_prediction(update, context, question)
+
+
+async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not update.message or not update.effective_user or not update.effective_chat:
+        return
+
+    question = (update.message.text or "").strip()
+    if len(question) < 3:
+        await update.message.reply_text("Сформулируй вопрос чуть подробнее 🙂")
+        return
+
+    trigger = "disa_predskazaniy38"
+    normalized = question.lower().strip()
+    if normalized == trigger or normalized.startswith(trigger + " "):
+        payload = question[len(trigger):].strip() if normalized.startswith(trigger) else ""
+        question = payload or "Что меня ждёт за покерным столом?"
+
+    await _send_prediction(update, context, question)
+
+
 def main() -> None:
     token = os.getenv("BOT_TOKEN")
     if not token:
@@ -171,6 +192,7 @@ def main() -> None:
     app.add_handler(CommandHandler("allow", allow_cmd))
     app.add_handler(CommandHandler("unallow", unallow_cmd))
     app.add_handler(CommandHandler("allowlist", allowlist_cmd))
+    app.add_handler(CommandHandler("disa_predskazaniy38", disa_cmd))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
 
     print("Bot is running...")
