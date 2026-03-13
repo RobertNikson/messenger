@@ -41,13 +41,29 @@ PREDICTIONS = [
     "Сейчас твоя стратегия как Reels — ярко, быстро и местами вообще без смысла.",
     "Хочешь хайпа как у мем-коина? Тогда готовься и к просадке, епт.",
     "Не делай решений на вайбе, это не стрим с донатами, это твои деньги.",
-    "С таким темпом ты скоро откроешь стартап: ""Как проебать стек за 3 минуты"".",
+    "С таким темпом ты скоро откроешь стартап: \"Как проебать стек за 3 минуты\".",
     "Сегодня ты в режиме нейросети: уверен на 100%, а потом внезапно несёшь хуйню.",
     "Действуй проще: меньше драмы, меньше FOMO, больше головы.",
     "Если план звучит как кликбейт-заголовок — скорее всего, это херня.",
     "Энергия у тебя как у вирусного трека, но контроль как у пьяного самоката.",
     "Не пытайся быть одновременно крипто-гуру, покер-про и сигма-коучем — выбери одно, блядь.",
     "Сегодня тренд такой: кто не суетится, тот забирает плюс.",
+    "Если день идёт по пизде — не удваивай ставки, удваивай осторожность.",
+    "Ты сейчас как чат в Telegram ночью: шума дохуя, пользы мало.",
+    "План на день: меньше понтов, меньше риска, больше бабок к вечеру.",
+    "Не будь героем every hand — геройство оплачивается из твоего кармана.",
+    "Твоё терпение сегодня дороже любого туза, не просри его.",
+    "Включи голову, а не эго — эго уже достаточно накосячило.",
+    "Если хочется нажать колл просто из злости — отойди на минуту, брат.",
+    "Сегодня даже Вселенная шепчет: \"не ебашь без плана\".",
+    "Ты не обязан тащить каждую раздачу, но обязан не творить хуйню.",
+    "Фарт любит подготовленных, а не тех, кто верит в магию после трёх кулеров.",
+    "Тильт — это налог на тупость. Не плати его сегодня.",
+    "Если чувствуешь себя гением, проверь график — он часто матерится в ответ.",
+    "Меньше импровизации, больше структуры — и будет не стыдно смотреть отчёт.",
+    "Сегодняшний лайфхак: фолд вовремя спасает нервы, деньги и самооценку.",
+    "Ты как мем недели: сначала смешно, потом всем дорого обходится.",
+    "Не гонись за хайпом, гонись за плюс-ЕV, остальное нахер.",
 ]
 
 ROAST_PREFIXES = [
@@ -69,18 +85,31 @@ def _chat_allowlist(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> set[str
     return data
 
 
+def _chat_prediction_pool(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> list[str]:
+    key = f"prediction_pool:{chat_id}"
+    pool = context.application.bot_data.get(key)
+    if not pool:
+        pool = PREDICTIONS.copy()
+        random.shuffle(pool)
+        context.application.bot_data[key] = pool
+    return pool
+
+
+def _next_prediction(context: ContextTypes.DEFAULT_TYPE, chat_id: int) -> str:
+    pool = _chat_prediction_pool(context, chat_id)
+    return pool.pop()
+
+
 def _display_name(user) -> str:
     if user.username:
         return f"@{user.username}"
     return user.first_name or "игрок"
 
 
-def make_prediction(question: str, author_name: str, target_name: str | None = None) -> str:
-    answer = random.choice(PREDICTIONS)
+def make_prediction(answer: str, author_name: str, target_name: str | None = None) -> str:
     opener = random.choice(ROAST_PREFIXES)
     who = target_name if target_name else author_name
     roast_line = f"{opener}, {who}: {answer}"
-
     return f"<b>Предсказание:</b> {html.escape(roast_line)}"
 
 
@@ -156,7 +185,7 @@ async def allowlist_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     await update.message.reply_text(f"Рандом-список:\n{lines}")
 
 
-async def _send_prediction(update: Update, context: ContextTypes.DEFAULT_TYPE, question: str) -> None:
+async def _send_prediction(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message or not update.effective_user or not update.effective_chat:
         return
 
@@ -167,15 +196,15 @@ async def _send_prediction(update: Update, context: ContextTypes.DEFAULT_TYPE, q
     if allowlist and random.random() < 0.5:
         target = f"@{random.choice(allowlist)}"
 
-    prediction = make_prediction(question, author_name=author, target_name=target)
+    answer = _next_prediction(context, update.effective_chat.id)
+    prediction = make_prediction(answer, author_name=author, target_name=target)
     await update.message.reply_text(prediction, parse_mode=ParseMode.HTML)
 
 
 async def disa_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not update.message:
         return
-    question = " ".join(context.args).strip() if context.args else "Что меня ждёт за покерным столом?"
-    await _send_prediction(update, context, question)
+    await _send_prediction(update, context)
 
 
 def main() -> None:
