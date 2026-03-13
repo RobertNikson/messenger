@@ -1,0 +1,3 @@
+node_modules/
+server/messenger.db
+.DS_Store
