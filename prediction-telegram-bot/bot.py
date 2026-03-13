@@ -1,7 +1,6 @@
 import html
 import os
 import random
-from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 from telegram import Update
@@ -53,8 +52,6 @@ def _display_name(user) -> str:
 
 def make_prediction(question: str, author_name: str, target_name: str | None = None) -> str:
     answer = random.choice(PREDICTIONS)
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-
     opener = random.choice(ROAST_PREFIXES)
     who = target_name if target_name else author_name
     roast_line = f"{opener}, {who}: {answer}"
@@ -63,8 +60,7 @@ def make_prediction(question: str, author_name: str, target_name: str | None = N
         "🔮 <b>Покер-предсказание</b>\n\n"
         f"<b>Вопрос от:</b> {html.escape(author_name)}\n"
         f"<b>Вопрос:</b> {html.escape(question)}\n\n"
-        f"<b>Вердикт:</b> {html.escape(roast_line)}\n\n"
-        f"<i>{ts}</i>"
+        f"<b>Предсказание:</b> {html.escape(roast_line)}"
     )
 
 
