@@ -37,6 +37,12 @@ npm run -w @decentra/p2p-core secure:dev -- --name alice
 npm run -w @decentra/p2p-core secure:dev -- --name bob --peerDid did:dm:...aliceDid
 ```
 
+UI demo (browser control panel for secure nodes):
+```bash
+npm run -w @decentra/web-client dev
+```
+Then open `http://localhost:6060`
+
 ## Next milestones
 1. Upgrade current ratchet demo to production-grade Double Ratchet (DH ratchet steps + skipped-key store)
 2. Offline store-and-forward peers

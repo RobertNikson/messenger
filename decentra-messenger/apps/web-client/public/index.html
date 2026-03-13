@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Decentra Messenger UI Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    textarea { width:100%; height:220px; }
+    input { width:100%; margin:4px 0; }
+    button { margin:4px 4px 4px 0; }
+  </style>
+</head>
+<body>
+  <h2>Decentra Messenger — UI demo</h2>
+  <p>Сначала запусти <code>npm run bootstrap:dev</code> в отдельном терминале.</p>
+
+  <div class="grid">
+    <div>
+      <h3>Alice</h3>
+      <button onclick="start('alice')">Start Alice</button>
+      <button onclick="stop('alice')">Stop Alice</button>
+      <input id="aliceMsg" placeholder="message from alice" />
+      <button onclick="sendMsg('alice')">Send</button>
+      <textarea id="aliceLog" readonly></textarea>
+    </div>
+
+    <div>
+      <h3>Bob</h3>
+      <input id="bobPeer" placeholder="Alice DID (вставь сюда)" />
+      <button onclick="start('bob', document.getElementById('bobPeer').value)">Start Bob</button>
+      <button onclick="stop('bob')">Stop Bob</button>
+      <input id="bobMsg" placeholder="message from bob" />
+      <button onclick="sendMsg('bob')">Send</button>
+      <textarea id="bobLog" readonly></textarea>
+    </div>
+  </div>
+
+<script>
+const api = (p, o={}) => fetch(p, {headers:{'content-type':'application/json'}, ...o}).then(r=>r.json());
+
+async function start(name, peerDid='') {
+  await api('/api/session/start', {method:'POST', body: JSON.stringify({name, peerDid: peerDid || undefined})});
+}
+
+async function stop(name) {
+  await api('/api/session/stop', {method:'POST', body: JSON.stringify({name})});
+}
+
+async function sendMsg(name) {
+  const el = document.getElementById(name + 'Msg');
+  await api('/api/session/send', {method:'POST', body: JSON.stringify({name, text: el.value})});
+  el.value = '';
+}
+
+async function refreshLogs() {
+  for (const n of ['alice','bob']) {
+    const out = document.getElementById(n + 'Log');
+    const r = await fetch('/api/session/logs/' + n);
+    if (r.ok) {
+      const j = await r.json();
+      out.value = j.logs;
+      out.scrollTop = out.scrollHeight;
+    }
+  }
+}
+setInterval(refreshLogs, 1200);
+</script>
+</body>
+</html>
