@@ -7,6 +7,7 @@
     "dev": "tsx src/index.ts"
   },
   "dependencies": {
+    "@decentra/shared-types": "0.1.0",
     "fastify": "^5.2.1"
   },
   "devDependencies": {

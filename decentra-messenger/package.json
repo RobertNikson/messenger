@@ -8,6 +8,10 @@
   ],
   "scripts": {
     "build": "npm run -ws build",
-    "p2p:dev": "npm -w @decentra/p2p-core run dev"
+    "p2p:dev": "npm -w @decentra/p2p-core run dev",
+    "bootstrap:dev": "npm -w @decentra/bootstrap-server run dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
   }
 }

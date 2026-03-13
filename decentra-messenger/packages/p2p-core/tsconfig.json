@@ -1,8 +1,4 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["src"],
-  "references": [
-    { "path": "../shared-types" },
-    { "path": "../crypto-core" }
-  ]
+  "include": ["src"]
 }

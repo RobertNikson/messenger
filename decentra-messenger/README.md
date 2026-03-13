@@ -29,9 +29,16 @@ npm run p2p:dev -- --name alice
 npm run p2p:dev -- --name bob
 ```
 
+Run bootstrap + secure session demo:
+```bash
+npm run bootstrap:dev
+npm run -w @decentra/p2p-core secure:dev -- --name alice
+npm run -w @decentra/p2p-core secure:dev -- --name bob --peerDid did:dm:...aliceDid
+```
+
 ## Next milestones
-1. Pre-key bundles + session bootstrap
-2. Double Ratchet message chain
-3. Offline store-and-forward peers
-4. iOS client integration
-5. Group messaging with sender keys
+1. Replace simplified session derivation with full X3DH + Double Ratchet state
+2. Offline store-and-forward peers
+3. iOS client integration
+4. Group messaging with sender keys
+5. Key transparency + device revocation

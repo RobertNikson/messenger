@@ -18,7 +18,7 @@ node.getMultiaddrs().forEach((a) => console.log(` - ${a.toString()}`));
 
 process.stdin.setEncoding("utf8");
 process.stdin.on("data", async (line) => {
-  const text = line.trim();
+  const text = String(line).trim();
   if (!text) return;
   await publish(`${name}: ${text}`);
 });

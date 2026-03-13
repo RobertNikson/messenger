@@ -10,3 +10,21 @@ export interface EncryptedEnvelope {
   nonceB64: string;
   signatureB64: string;
 }
+
+export interface PreKeyBundle {
+  did: DID;
+  identitySignPubB58: string;
+  identityBoxPubB58: string;
+  signedPreKeyPubB58: string;
+  signedPreKeySigB64: string;
+  oneTimePreKeyPubB58?: string;
+  publishedAt: number;
+}
+
+export interface SessionInit {
+  from: DID;
+  to: DID;
+  ephPubB58: string;
+  usedOneTimePreKeyPubB58?: string;
+  ts: number;
+}
