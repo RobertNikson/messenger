@@ -7,6 +7,7 @@ export interface EncryptedEnvelope {
   ts: number;
   algo: "x25519-xsalsa20poly1305" | "double-ratchet-v1";
   messageIndex?: number;
+  ratchetPubB58?: string;
   ciphertextB64: string;
   nonceB64: string;
   signatureB64: string;

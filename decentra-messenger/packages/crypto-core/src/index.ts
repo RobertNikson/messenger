@@ -29,6 +29,10 @@ export interface DoubleRatchetState {
   recvChainKeyB64: string;
   sendN: number;
   recvN: number;
+  myRatchetPubB58: string;
+  myRatchetSecB58: string;
+  peerRatchetPubB58: string;
+  skippedKeys: Record<string, string>; // key: "ratchetPub:index" => msgKeyB64
 }
 
 export interface PreKeyMaterial {
@@ -98,7 +102,18 @@ function kdfLabel(keyB64: string, label: string): string {
   return Buffer.from(out).toString("base64");
 }
 
+function advanceRootWithDh(rootKeyB64: string, mySecB58: string, peerPubB58: string): { rootKeyB64: string; chainKeyB64: string } {
+  const dh = nacl.scalarMult(bs58.decode(mySecB58), bs58.decode(peerPubB58));
+  const nextRoot = kdf([Buffer.from(rootKeyB64, "base64"), dh]);
+  const nextRootB64 = Buffer.from(nextRoot).toString("base64");
+  const chainKeyB64 = kdfLabel(nextRootB64, "chain:init");
+  return { rootKeyB64: nextRootB64, chainKeyB64 };
+}
+
 export function initDoubleRatchet(session: SessionState, isInitiator: boolean): DoubleRatchetState {
+  const myRatchet = nacl.box.keyPair();
+  const peerRatchet = nacl.box.keyPair(); // placeholder before first remote ratchet key seen
+
   return {
     sessionId: session.id,
     peerDid: session.peerDid,
@@ -107,10 +122,14 @@ export function initDoubleRatchet(session: SessionState, isInitiator: boolean): 
     recvChainKeyB64: kdfLabel(session.rootKeyB64, isInitiator ? "recv:init:a" : "recv:init:b"),
     sendN: 0,
     recvN: 0,
+    myRatchetPubB58: bs58.encode(myRatchet.publicKey),
+    myRatchetSecB58: bs58.encode(myRatchet.secretKey),
+    peerRatchetPubB58: bs58.encode(peerRatchet.publicKey),
+    skippedKeys: {},
   };
 }
 
-export function ratchetEncrypt(plainText: string, state: DoubleRatchetState): { nonceB64: string; ciphertextB64: string; messageIndex: number } {
+export function ratchetEncrypt(plainText: string, state: DoubleRatchetState): { nonceB64: string; ciphertextB64: string; messageIndex: number; ratchetPubB58: string } {
   const msgKeyB64 = kdfLabel(state.sendChainKeyB64, `msg:${state.sendN}`);
   const nextChainB64 = kdfLabel(state.sendChainKeyB64, "chain:next");
 
@@ -125,11 +144,50 @@ export function ratchetEncrypt(plainText: string, state: DoubleRatchetState): { 
     nonceB64: Buffer.from(nonce).toString("base64"),
     ciphertextB64: Buffer.from(ciphertext).toString("base64"),
     messageIndex: idx,
+    ratchetPubB58: state.myRatchetPubB58,
   };
 }
 
-export function ratchetDecrypt(ciphertextB64: string, nonceB64: string, messageIndex: number, state: DoubleRatchetState): string {
+export function ratchetDecrypt(
+  ciphertextB64: string,
+  nonceB64: string,
+  messageIndex: number,
+  ratchetPubB58: string,
+  state: DoubleRatchetState
+): string {
+  const skippedKeyId = `${ratchetPubB58}:${messageIndex}`;
+  const skippedKey = state.skippedKeys[skippedKeyId];
+  if (skippedKey) {
+    delete state.skippedKeys[skippedKeyId];
+    const opened = nacl.secretbox.open(
+      Buffer.from(ciphertextB64, "base64"),
+      Buffer.from(nonceB64, "base64"),
+      Buffer.from(skippedKey, "base64")
+    );
+    if (!opened) throw new Error("Failed skipped-key decrypt");
+    return textDecoder.decode(opened);
+  }
+
+  if (ratchetPubB58 !== state.peerRatchetPubB58) {
+    state.peerRatchetPubB58 = ratchetPubB58;
+    const recvStep = advanceRootWithDh(state.rootKeyB64, state.myRatchetSecB58, state.peerRatchetPubB58);
+    state.rootKeyB64 = recvStep.rootKeyB64;
+    state.recvChainKeyB64 = recvStep.chainKeyB64;
+    state.recvN = 0;
+
+    const newMyRatchet = nacl.box.keyPair();
+    state.myRatchetPubB58 = bs58.encode(newMyRatchet.publicKey);
+    state.myRatchetSecB58 = bs58.encode(newMyRatchet.secretKey);
+
+    const sendStep = advanceRootWithDh(state.rootKeyB64, state.myRatchetSecB58, state.peerRatchetPubB58);
+    state.rootKeyB64 = sendStep.rootKeyB64;
+    state.sendChainKeyB64 = sendStep.chainKeyB64;
+    state.sendN = 0;
+  }
+
   while (state.recvN < messageIndex) {
+    const mk = kdfLabel(state.recvChainKeyB64, `msg:${state.recvN}`);
+    state.skippedKeys[`${state.peerRatchetPubB58}:${state.recvN}`] = mk;
     state.recvChainKeyB64 = kdfLabel(state.recvChainKeyB64, "chain:next");
     state.recvN += 1;
   }

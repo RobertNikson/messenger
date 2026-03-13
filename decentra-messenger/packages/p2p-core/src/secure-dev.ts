@@ -66,10 +66,12 @@ const { publish } = await createP2PNode(async (raw) => {
       if (!verifyEnvelope(parsed.env, parsed.senderSignPubB58)) return;
       const sess = sessions.get(parsed.env.from);
       if (!sess) return;
+      if (!parsed.env.ratchetPubB58) return;
       const text = ratchetDecrypt(
         parsed.env.ciphertextB64,
         parsed.env.nonceB64,
         parsed.env.messageIndex ?? 0,
+        parsed.env.ratchetPubB58,
         sess
       );
       console.log(`[${name}] < ${parsed.env.from}: ${text}`);
@@ -112,6 +114,7 @@ process.stdin.on("data", async (line) => {
     ts: Date.now(),
     algo: "double-ratchet-v1" as const,
     messageIndex: enc.messageIndex,
+    ratchetPubB58: enc.ratchetPubB58,
     ciphertextB64: enc.ciphertextB64,
     nonceB64: enc.nonceB64,
   };
