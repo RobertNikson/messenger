@@ -37,7 +37,7 @@ npm run -w @decentra/p2p-core secure:dev -- --name bob --peerDid did:dm:...alice
 ```
 
 ## Next milestones
-1. Replace simplified session derivation with full X3DH + Double Ratchet state
+1. Upgrade current ratchet demo to production-grade Double Ratchet (DH ratchet steps + skipped-key store)
 2. Offline store-and-forward peers
 3. iOS client integration
 4. Group messaging with sender keys

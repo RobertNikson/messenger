@@ -7,14 +7,15 @@ import {
   createPreKeyBundle,
   createPreKeyMaterial,
   createSessionInit,
-  decryptForSession,
   deriveSessionAsInitiator,
   deriveSessionAsResponder,
-  encryptForSession,
+  initDoubleRatchet,
+  ratchetDecrypt,
+  ratchetEncrypt,
   signEnvelope,
   verifyPreKeyBundle,
   verifyEnvelope,
-  type SessionState,
+  type DoubleRatchetState,
 } from "@decentra/crypto-core";
 import type { EncryptedEnvelope, PreKeyBundle, SessionInit } from "@decentra/shared-types";
 
@@ -41,7 +42,7 @@ await fetch(`${bootstrap}/v1/prekey`, {
 console.log(`[${name}] did: ${id.did}`);
 console.log(`[${name}] prekey bundle published`);
 
-const sessions = new Map<string, SessionState>();
+const sessions = new Map<string, DoubleRatchetState>();
 
 const { publish } = await createP2PNode(async (raw) => {
   try {
@@ -56,7 +57,7 @@ const { publish } = await createP2PNode(async (raw) => {
         peerEphPubB58: parsed.init.ephPubB58,
         initiatorIdentityBoxPubB58: parsed.senderIdentityBoxPubB58,
       });
-      sessions.set(parsed.init.from, sess);
+      sessions.set(parsed.init.from, initDoubleRatchet(sess, false));
       console.log(`[${name}] session ready with ${parsed.init.from}`);
       return;
     }
@@ -65,7 +66,12 @@ const { publish } = await createP2PNode(async (raw) => {
       if (!verifyEnvelope(parsed.env, parsed.senderSignPubB58)) return;
       const sess = sessions.get(parsed.env.from);
       if (!sess) return;
-      const text = decryptForSession(parsed.env.ciphertextB64, parsed.env.nonceB64, sess.rootKeyB64);
+      const text = ratchetDecrypt(
+        parsed.env.ciphertextB64,
+        parsed.env.nonceB64,
+        parsed.env.messageIndex ?? 0,
+        sess
+      );
       console.log(`[${name}] < ${parsed.env.from}: ${text}`);
     }
   } catch {
@@ -81,7 +87,7 @@ if (peerDid) {
 
   const { init, ephSecretB58 } = createSessionInit(id.did, peerBundle.did, peerBundle.oneTimePreKeyPubB58);
   const sess = deriveSessionAsInitiator({ me: id, myEphSecretB58: ephSecretB58, peerBundle });
-  sessions.set(peerBundle.did, sess);
+  sessions.set(peerBundle.did, initDoubleRatchet(sess, true));
 
   await publish(JSON.stringify({ type: "session-init", init, senderIdentityBoxPubB58: id.boxPublicKeyB58 }));
   console.log(`[${name}] session init sent to ${peerBundle.did}`);
@@ -98,13 +104,14 @@ process.stdin.on("data", async (line) => {
     return;
   }
 
-  const enc = encryptForSession(text, sess.rootKeyB64);
+  const enc = ratchetEncrypt(text, sess);
   const unsigned = {
     id: randomUUID(),
     from: id.did,
     to: peerDid as `did:dm:${string}`,
     ts: Date.now(),
-    algo: "x25519-xsalsa20poly1305" as const,
+    algo: "double-ratchet-v1" as const,
+    messageIndex: enc.messageIndex,
     ciphertextB64: enc.ciphertextB64,
     nonceB64: enc.nonceB64,
   };

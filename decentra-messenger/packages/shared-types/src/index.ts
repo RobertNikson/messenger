@@ -6,6 +6,7 @@ export interface EncryptedEnvelope {
   to: DID;
   ts: number;
   algo: "x25519-xsalsa20poly1305" | "double-ratchet-v1";
+  messageIndex?: number;
   ciphertextB64: string;
   nonceB64: string;
   signatureB64: string;

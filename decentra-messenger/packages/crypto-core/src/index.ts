@@ -21,6 +21,16 @@ export interface SessionState {
   createdAt: number;
 }
 
+export interface DoubleRatchetState {
+  sessionId: string;
+  peerDid: DID;
+  rootKeyB64: string;
+  sendChainKeyB64: string;
+  recvChainKeyB64: string;
+  sendN: number;
+  recvN: number;
+}
+
 export interface PreKeyMaterial {
   signedPreKeyPublicB58: string;
   signedPreKeySecretB58: string;
@@ -81,6 +91,62 @@ function kdf(parts: Uint8Array[]): Uint8Array {
   const hash = createHash("sha256");
   for (const p of parts) hash.update(p);
   return new Uint8Array(hash.digest());
+}
+
+function kdfLabel(keyB64: string, label: string): string {
+  const out = kdf([Buffer.from(keyB64, "base64"), textEncoder.encode(label)]);
+  return Buffer.from(out).toString("base64");
+}
+
+export function initDoubleRatchet(session: SessionState, isInitiator: boolean): DoubleRatchetState {
+  return {
+    sessionId: session.id,
+    peerDid: session.peerDid,
+    rootKeyB64: session.rootKeyB64,
+    sendChainKeyB64: kdfLabel(session.rootKeyB64, isInitiator ? "send:init:a" : "send:init:b"),
+    recvChainKeyB64: kdfLabel(session.rootKeyB64, isInitiator ? "recv:init:a" : "recv:init:b"),
+    sendN: 0,
+    recvN: 0,
+  };
+}
+
+export function ratchetEncrypt(plainText: string, state: DoubleRatchetState): { nonceB64: string; ciphertextB64: string; messageIndex: number } {
+  const msgKeyB64 = kdfLabel(state.sendChainKeyB64, `msg:${state.sendN}`);
+  const nextChainB64 = kdfLabel(state.sendChainKeyB64, "chain:next");
+
+  const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+  const ciphertext = nacl.secretbox(textEncoder.encode(plainText), nonce, Buffer.from(msgKeyB64, "base64"));
+
+  const idx = state.sendN;
+  state.sendN += 1;
+  state.sendChainKeyB64 = nextChainB64;
+
+  return {
+    nonceB64: Buffer.from(nonce).toString("base64"),
+    ciphertextB64: Buffer.from(ciphertext).toString("base64"),
+    messageIndex: idx,
+  };
+}
+
+export function ratchetDecrypt(ciphertextB64: string, nonceB64: string, messageIndex: number, state: DoubleRatchetState): string {
+  while (state.recvN < messageIndex) {
+    state.recvChainKeyB64 = kdfLabel(state.recvChainKeyB64, "chain:next");
+    state.recvN += 1;
+  }
+
+  const msgKeyB64 = kdfLabel(state.recvChainKeyB64, `msg:${state.recvN}`);
+  const opened = nacl.secretbox.open(
+    Buffer.from(ciphertextB64, "base64"),
+    Buffer.from(nonceB64, "base64"),
+    Buffer.from(msgKeyB64, "base64")
+  );
+
+  if (!opened) throw new Error("Failed to ratchet decrypt");
+
+  state.recvChainKeyB64 = kdfLabel(state.recvChainKeyB64, "chain:next");
+  state.recvN += 1;
+
+  return textDecoder.decode(opened);
 }
 
 export function createSessionInit(from: DID, to: DID, usedOneTimePreKeyPubB58?: string): { init: SessionInit; ephSecretB58: string } {
