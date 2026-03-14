@@ -18,6 +18,7 @@ function startSession(name, peerDid) {
 
   const args = ["run", "-w", "@decentra/p2p-core", "secure:dev", "--", "--name", name];
   if (peerDid) args.push("--peerDid", peerDid);
+  if (process.env.BOOTSTRAP_URL) args.push("--bootstrap", process.env.BOOTSTRAP_URL);
 
   const proc = spawn("npm", args, {
     cwd: path.resolve("../.."),
@@ -68,6 +69,8 @@ app.post("/api/session/stop", async (req) => {
   return { ok: true };
 });
 
+app.get("/health", async () => ({ ok: true }));
 app.get("/", async (req, reply) => reply.sendFile("index.html"));
 
-app.listen({ port: 6060, host: "0.0.0.0" });
+const WEB_PORT = Number(process.env.PORT || 6060);
+app.listen({ port: WEB_PORT, host: "0.0.0.0" });

@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "build": "npm run -ws build",
+    "start": "node start.mjs",
     "p2p:dev": "npm -w @decentra/p2p-core run dev",
     "bootstrap:dev": "npm -w @decentra/bootstrap-server run dev"
   },
