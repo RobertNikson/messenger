@@ -43,6 +43,22 @@ npm run -w @decentra/web-client dev
 ```
 Then open `http://localhost:6060`
 
+## Run directly on GitHub (Codespaces)
+
+1. Open: `https://github.com/RobertNikson/messenger`
+2. Click **Code → Codespaces → Create codespace on master**
+3. In Codespaces terminal run:
+   ```bash
+   cd decentra-messenger
+   npm run bootstrap:dev
+   ```
+4. Open a second terminal and run:
+   ```bash
+   cd decentra-messenger
+   npm run -w @decentra/web-client dev
+   ```
+5. Open forwarded port **6060** (public URL) and use the UI.
+
 ## Next milestones
 1. Upgrade current ratchet demo to production-grade Double Ratchet (DH ratchet steps + skipped-key store)
 2. Offline store-and-forward peers

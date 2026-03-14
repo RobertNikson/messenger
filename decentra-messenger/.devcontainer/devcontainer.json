@@ -1,0 +1,22 @@
+{
+  "name": "decentra-messenger",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:22",
+  "postCreateCommand": "npm install",
+  "forwardPorts": [6060, 9797],
+  "portsAttributes": {
+    "6060": {
+      "label": "Decentra Web UI",
+      "onAutoForward": "openBrowser"
+    },
+    "9797": {
+      "label": "Bootstrap"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}
