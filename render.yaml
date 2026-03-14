@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: decentra-messenger
+    env: node
+    plan: free
+    rootDir: decentra-messenger
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BOOTSTRAP_PORT
+        value: "9797"
+      - key: BOOTSTRAP_URL
+        value: "http://127.0.0.1:9797"
